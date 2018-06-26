@@ -7,15 +7,14 @@ public class MovementSnake : MonoBehaviour {
 
     public static MovementSnake instance;
 
-    public List<GameObject> snake;
+    private List<GameObject> snake;
     public GameObject food;
     public GameObject snakeHead;
     public GameObject snakeBodyPart;
 
-    public bool hasWon = false;
-    public bool hasLost = false;
     private int msInCurrentStep;
-    private int msPerTick;
+    public float progressInStep;
+    public bool hasUpdated;
 
     private List<Vector3> snakeRotations;
     private Vector3 headTurning;
@@ -23,42 +22,62 @@ public class MovementSnake : MonoBehaviour {
     // Use this for initialization
     void Start () {
 
-        MoveFoodToNewLocation();
         instance = this;
+        //ignore what was set in the unity editor
+        hasUpdated = true;
+
+        //Check if everything needed is correctly assigned
+        if (food == null || snakeHead == null || snakeBodyPart == null)
+        {
+            throw new MissingReferenceException();
+        }
+
+        Reset();
+
+        //Testing
+        GrowSnake();
+        GrowSnake();
+        UpdatePosition();
+
+
+    }
+
+    public void Reset()
+    {
+        VariableManager.instance.hasWon = false;
+        VariableManager.instance.hasLost = false;
         msInCurrentStep = 0;
-        msPerTick = 500;
         snake = new List<GameObject>();
         snake.Add(snakeHead);
         snake.Add(snakeBodyPart);
         snakeRotations = new List<Vector3>();
-        snakeRotations.Add(new Vector3(0, 0, 0));
-        snakeRotations.Add(new Vector3(0, 0, 0));
-        //Testing
-        GrowSnake();
-        GrowSnake();
-        GrowSnake();
-        GrowSnake();
-        GrowSnake();
-	}
+        snakeRotations.Add(Vector3.zero);
+        snakeRotations.Add(Vector3.zero);
+        headTurning = Vector3.zero;
+        MoveFoodToNewLocation();
+    }
 
     internal void rotateRight()
     {
+        Debug.Log("Rotating right");
         snakeRotations[0] = new Vector3(0, 90, 0);
-
     }
 
     internal void rotateLeft()
     {
+        Debug.Log("Rotating left");
         snakeRotations[0] = new Vector3(0, -90, 0);
     }
 
     internal void rotateUp()
     {
+        Debug.Log("Rotating up");
         snakeRotations[0] = new Vector3(-90, 0, 0);
     }
 
     internal void rotateDown()
     {
+        Debug.Log("Rotating down");
         snakeRotations[0] = new Vector3(90, 0, 0);
     }
 
@@ -74,8 +93,23 @@ public class MovementSnake : MonoBehaviour {
     private void rotateView(Vector3 rotation)
     {
         headTurning += rotation;
-        headTurning = modulo(headTurning, new Vector3(360, 360, 360));
+        headTurning = headTurning.modulo(new Vector3(360, 360, 360));
         this.transform.Rotate(rotation);
+    }
+    
+    public void setRotation(Vector3 newOrientation)
+    {
+        //TODO make sure the new relative rotation is as wanted
+        //Want to set sR[0] so that it rotates the preview orientation to the wanted one.
+        snakeRotations[0] = newOrientation - snake[0].transform.rotation.eulerAngles;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        hasUpdated = false;
+        UpdatePosition((int)(Time.deltaTime * 1000));
+        progressInStep = (float)msInCurrentStep / VariableManager.instance.msPerMovementOfSnake;
     }
 
     public int UpdatePosition(int msSinceLastCall)
@@ -83,65 +117,27 @@ public class MovementSnake : MonoBehaviour {
         //Für stabile Updaterate
         int numberTicksDone = 0;
         msInCurrentStep += msSinceLastCall;
-        while (msInCurrentStep >= msPerTick)
+        while (msInCurrentStep >= VariableManager.instance.msPerMovementOfSnake)
         {
             UpdatePosition();
             numberTicksDone++;
-            msInCurrentStep -= msPerTick;
+            msInCurrentStep -= VariableManager.instance.msPerMovementOfSnake;
         }
         return numberTicksDone;
     }
 
-    private int isInside(Vector3 toBeChecked, Vector3 cage)
+    internal void UpdatePosition()
     {
-        if (toBeChecked.x < 0 || toBeChecked.x >= cage.x)
+        if(VariableManager.instance.hasLost || VariableManager.instance.hasWon)
         {
-            return 1;
+            Debug.Log("Trying to move while lost/won");
+            return;
         }
-        if (toBeChecked.y < 0 || toBeChecked.y >= cage.y)
-        {
-            return 2;
-        }
-        if (toBeChecked.z < 0 || toBeChecked.z >= cage.z)
-        {
-            return 3;
-        }
-        return 0;
-    }
-    private Vector3 modulo(Vector3 vectorToBeFitted, Vector3 cage)
-    {
-        return new Vector3((vectorToBeFitted.x + cage.x) % cage.x, (vectorToBeFitted.y + cage.y) % cage.y, (vectorToBeFitted.z + cage.z) % cage.z);
-    }
 
-    private bool isInSameCell(Vector3 a,Vector3 b)
-    {
-        if (Math.Floor(a.x) != Math.Floor(b.x))
-        {
-            return false;
-        }
-        if (Math.Floor(a.y) != Math.Floor(b.y))
-        {
-            return false;
-        }
-        if (Math.Floor(a.z) != Math.Floor(b.z))
-        {
-            return false;
-        }
-        return true;
-    }
+        hasUpdated = true;
 
-    private Vector3 getRandomVector()
-    {
-        return new Vector3(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
-    }
-
-    private Vector3 floorComponents(Vector3 old)
-    {
-        return new Vector3((float)Math.Floor(old.x), (float)Math.Floor(old.y), (float)Math.Floor(old.z));
-    }
-
-    private void UpdatePosition()
-    {
+        //Make the body follow the new rotation of the head, without that the tail might get detached from the head
+        snakeRotations[1] += headTurning;
 
         //Für eigentliche Bewegung der Schlange
         for (int i = 0; i < snake.Count; i++)
@@ -150,30 +146,36 @@ public class MovementSnake : MonoBehaviour {
             snake[i].transform.Rotate(snakeRotations[i]);
             //dann Bewegung 
             snake[i].transform.Translate(Vector3.forward);
-            snake[i].transform.position = floorComponents(snake[i].transform.position) + new Vector3(0.5f,0.5f,0.5f);
-            
+            snake[i].transform.position = snake[i].transform.position.floorComponents() + new Vector3(0.5f,0.5f,0.5f);
+
             //prüfen, ob der Spielbereich verlassen wurde und ggf loop auf die andere Seite
-            checkIfAreaLeftAndFixPosition(snake[i].transform);
+            Vector3 newPosition;
+            bool hasLeftArea = snake[i].transform.position.checkIfAreaLeftAndReturnNewPosition(out newPosition);
+            snake[i].transform.position = newPosition;
+
+
+            //lose when the head has left the area
+            if (hasLeftArea && i == 0)
+            {
+                VariableManager.instance.hasLost = true;
+            }
         }
 
         //prüfen, ob das Futter erreicht wurde
-        if (isInSameCell(food.transform.position, transform.position))
+        if (food.transform.position.isInSameCell(transform.position))
         {
             MoveFoodToNewLocation();
             GrowSnake();
         }
 
-        snakeRotations[0] += headTurning;
-        snakeRotations[0] = modulo(snakeRotations[0], new Vector3(360, 360, 360));
         for (int i = snakeRotations.Count - 1; i > 0; i--)
         {
             snakeRotations[i] = snakeRotations[i - 1];
         }
 
         //set Rotation of the head to 0
-        snakeRotations[0] = new Vector3(0, 0, 0);
-        headTurning = new Vector3(0, 0, 0);
-
+        snakeRotations[0] = Vector3.zero;
+        headTurning = Vector3.zero;
     }
 
     private void GrowSnake()
@@ -185,56 +187,42 @@ public class MovementSnake : MonoBehaviour {
         snakeRotations.Add(Vector3.forward);
     }
 
+    public int GetLength()
+    {
+        return snake.Count - 1;
+    }
+
+    public GameObject GetSnakePartGameObject(int index)
+    {
+        if (index == snake.Count - 1)
+            throw new IndexOutOfRangeException();
+
+        return snake[index];
+    }
+
+    public Transform GetStartPositionOf(int index)
+    {
+        return GetSnakePartGameObject(index).transform;
+    }
+
+    public Transform GetEndPositionOf(int index)
+    {
+        index++;
+        if (index == 0)
+            throw new IndexOutOfRangeException();
+        return snake[index].transform;
+    }
+
     private void MoveFoodToNewLocation()
     {
 
         //Get a random position
-        Vector3 newFoodPostion = getRandomVector();
+        Vector3 newFoodPostion = Vector3Extensions.getRandomVector();
         //Make it fit the entire grid
-        newFoodPostion.Scale(CreateMap.instance.size);
+        newFoodPostion.Scale(VariableManager.instance.mapSize);
         //mvoe the food on the edges of the grid
-        food.transform.position = floorComponents(newFoodPostion);
+        food.transform.position = newFoodPostion.floorComponents();
         //move it right into the middle of a block in the grid
-        food.transform.Translate(new Vector3((float)0.5, (float)0.5, (float)0.5));
+        food.transform.Translate(new Vector3(0.5f, 0.5f, 0.5f));
     }
-
-    private void checkIfAreaLeftAndFixPosition(Transform toCheck)
-    {
-        int leftGridVia = isInside(toCheck.position, CreateMap.instance.size);
-        if (leftGridVia != 0)
-        {
-            switch (leftGridVia)
-            {
-                case 1:
-                    Debug.Log("Left the grid on the x axis");
-                    if (!CreateMap.instance.isXAxisLooped)
-                    {
-                        hasLost = true;
-                    }
-                    break;
-                case 2:
-                    Debug.Log("Left the grid on the y axis");
-                    if (!CreateMap.instance.isYAxisLooped)
-                    {
-                        hasLost = true;
-                    }
-                    break;
-                case 3:
-                    Debug.Log("Left the grid on the z axis");
-                    if (!CreateMap.instance.isZAxisLooped)
-                    {
-                        hasLost = true;
-                    }
-                    break;
-                default:
-                    break;
-            }
-            toCheck.position = modulo(toCheck.position, CreateMap.instance.size);
-        }
-    }
-
-    // Update is called once per frame
-    void Update () {
-        UpdatePosition((int)(Time.deltaTime * 1000));
-	}
 }
