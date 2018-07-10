@@ -9,6 +9,8 @@ public class VariableManager : MonoBehaviour{
     //Instance of the VariableManager (static)
     public static VariableManager instance = new VariableManager();
 
+    public bool isDebug;
+
     //Controller variables
     public bool useVRBasic;
     public bool useVR360persistent;
@@ -17,6 +19,7 @@ public class VariableManager : MonoBehaviour{
     public bool useExperimental;
     public bool useVRControllerBasic;
     public bool useVRControllerBasicButtons;
+    public bool useRotationControl;
     //Win/Lose conditions
     public bool hasWon;
     public bool hasLost;
@@ -35,37 +38,83 @@ public class VariableManager : MonoBehaviour{
     public float sensitivityVertical;
     //MovementSnake(Logic)
     public int msPerMovementOfSnake;
+    public bool dieOnBodyCollsion;
+    public bool dieOnWallCollsion;
+    public int initalLength;
+    public Vector3 initalPositionHead;
+    public Quaternion initalRotation;
+    public bool placeRandomFoodActive;
+    //Snake 3D Object
+    public float snakeThicknessX;
+    public float snakeThicknessZ;
+
     //SnakeGaze
     public float gazeLength;
     public float correctGazeYPosition;
+    //User Interface/Menu
+    public bool startGame;
+    //cams
+    public bool maincam;
+    public bool menucam;
+    //
+    public bool showMainMenu;
+    public bool showHighscore;
+    public bool showGameOver;
+    public bool showOptions;
+    public bool showPause;
 
-    public void Start()
+
+    /*
+     * Force that the correct values are accessible each and every time 
+     * and not depending on the order when the start() was called.
+     */
+    public VariableManager()
     {
-        instance = this;
+        isDebug = true;
 
         useExperimental = false;
-        useKeyboard = false;
+        useKeyboard = true;
         useVRAdvanced = false;
         useVRBasic = false;
         useVR360persistent = false;
-        useVRControllerBasic = true;
-        useVRControllerBasicButtons = true;
+        useVRControllerBasic = false;
+        useVRControllerBasicButtons = false;
+        useRotationControl = false;
+    
 
 
-        hasWon = false;
-        hasLost = false;
-        isXAxisLooped = true;
-        isYAxisLooped = true;
-        isZAxisLooped = true;
-        msPerMovementOfSnake = 500;
         timeBetweenChangeDirection = 2.0f;
         sensitivityHorizontal = 0.3f;
         sensitivityVertical = 0.1f;
         correctGazeYPosition = 0.25f;
         gazeLength = 30f;
+        
         mapSize = new Vector3(20, 20, 20);
         largerGrid = 5;
         largerGridSizeFactor = 5f;
+        isXAxisLooped = false;
+        isYAxisLooped = false;
+        isZAxisLooped = false;
+
+        hasWon = false;
+        hasLost = false;
+        msPerMovementOfSnake = 500;
+        dieOnBodyCollsion = true;
+        dieOnWallCollsion = true;
+        initalLength = 2;
+        initalPositionHead = new Vector3(mapSize.x / 2, mapSize.y / 2, 0);
+        initalRotation = Quaternion.Euler(Vector3.zero);
+        placeRandomFoodActive = true;
+
+        snakeThicknessX = 0.6f;
+        snakeThicknessZ = snakeThicknessX;
+
+        startGame = false;
+        showMainMenu = true;
+        showHighscore = false;
+        showGameOver = false;
+        showOptions = false;
+        showPause = false;
     }
 
     //public Methods here
