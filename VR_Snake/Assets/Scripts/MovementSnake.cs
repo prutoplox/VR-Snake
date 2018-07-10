@@ -13,18 +13,30 @@ public class MovementSnake : MonoBehaviour {
     public GameObject snakeBodyPart;
 
     private int msInCurrentStep;
-    public float progressInStep;
     public bool hasUpdated;
+    public bool isPaused;
 
     private List<Vector3> snakeRotations;
     private Vector3 headTurning;
 
+
+    public float progressInStep
+    {
+        get
+        {
+            if(VariableManager.instance.hasLost || VariableManager.instance.hasWon)
+            {
+                return 0;
+            }
+            return (float)msInCurrentStep / VariableManager.instance.msPerMovementOfSnake;
+        }
+    }
+
     // Use this for initialization
-    void Start () {
+    void Start()
+    {
 
         instance = this;
-        //ignore what was set in the unity editor
-        hasUpdated = true;
 
         //Check if everything needed is correctly assigned
         if (food == null || snakeHead == null || snakeBodyPart == null)
@@ -34,16 +46,78 @@ public class MovementSnake : MonoBehaviour {
 
         Reset();
 
-        //Testing
-        GrowSnake();
-        GrowSnake();
         UpdatePosition();
-
-
     }
 
+    public void enterPause()
+    {
+        isPaused = true;
+    }
+
+    public void leavePause()
+    {
+        isPaused = false;
+        msInCurrentStep = 0;
+        hasUpdated = false;
+    }
+
+    public void togglePause()
+    {
+        if(isPaused)
+        {
+            leavePause();
+        }
+        else
+        {
+            enterPause();
+        }
+    }
+
+    public void CollsionWall()
+    {
+        if (VariableManager.instance.dieOnWallCollsion)
+        {
+            Debug.Log("Collided with the wall and died");
+            VariableManager.instance.hasLost = true;
+        }
+    }
+    public void CollsionBody()
+    {
+        if (VariableManager.instance.dieOnBodyCollsion)
+        {
+            Debug.Log("Collided with a part of the body and died");
+            VariableManager.instance.hasLost = true;
+        }
+    }
     public void Reset()
     {
+        //Tear down old data if there is some
+        if(snake != null)
+        {
+            /*
+             * We don't destroy the first two elements since we still need them to build up a new snake(head and a body "template").
+             * All the remaining elements are generated ones which can safely be removed
+             */
+            for(int i = 2; i < snake.Count; i++)
+            {
+                Destroy(snake[i]);
+            }
+        }
+
+
+        //ignore what was set in the unity editor
+        hasUpdated = true;
+
+        //Move the head to the inital postion, offsetting by 0.5f is needed to move it into the middle of a cell, the borders of cells are always at x.0
+        snakeHead.transform.position = VariableManager.instance.initalPositionHead + new Vector3(0.5f,0.5f,0.5f);
+        snakeHead.transform.rotation = VariableManager.instance.initalRotation;
+
+        snakeBodyPart.transform.position = VariableManager.instance.initalPositionHead + new Vector3(0.5f, 0.5f, 0.5f);
+        snakeBodyPart.transform.rotation = VariableManager.instance.initalRotation;
+        snakeBodyPart.transform.Translate(Vector3.back);
+        Debug.Log("Moved the headto the inital position of " + VariableManager.instance.initalPositionHead.ToString());
+
+
         VariableManager.instance.hasWon = false;
         VariableManager.instance.hasLost = false;
         msInCurrentStep = 0;
@@ -54,6 +128,12 @@ public class MovementSnake : MonoBehaviour {
         snakeRotations.Add(Vector3.zero);
         snakeRotations.Add(Vector3.zero);
         headTurning = Vector3.zero;
+
+        for (int i = 0; i < VariableManager.instance.initalLength; i++)
+        {
+            GrowSnake();
+        }
+
         MoveFoodToNewLocation();
     }
 
@@ -108,8 +188,14 @@ public class MovementSnake : MonoBehaviour {
     void Update()
     {
         hasUpdated = false;
+
+        if (isPaused)
+        {
+            Debug.Log("Not moving since we're paused");
+            return;
+        }
+
         UpdatePosition((int)(Time.deltaTime * 1000));
-        progressInStep = (float)msInCurrentStep / VariableManager.instance.msPerMovementOfSnake;
     }
 
     public int UpdatePosition(int msSinceLastCall)
@@ -157,7 +243,7 @@ public class MovementSnake : MonoBehaviour {
             //lose when the head has left the area
             if (hasLeftArea && i == 0)
             {
-                VariableManager.instance.hasLost = true;
+                CollsionWall();
             }
         }
 
@@ -178,13 +264,29 @@ public class MovementSnake : MonoBehaviour {
         headTurning = Vector3.zero;
     }
 
-    private void GrowSnake()
+    public void GrowSnake()
     {
         GameObject newBody = Instantiate(snake[snake.Count - 1]);
         snake.Add(newBody);
         newBody.transform.Translate(Vector3.back);
         newBody.transform.Rotate(new Vector3(360, 360, 360) - snakeRotations[snakeRotations.Count - 1]);
         snakeRotations.Add(Vector3.forward);
+    }
+
+    public void ShrinkSnake()
+    {
+        if(snake.Count <= 2)
+        {
+            Debug.LogWarning("Can't shrink the snake, the minimal size is already reached!");
+            return;
+        }
+
+        GameObject bodyToDelete = snake[snake.Count - 1];
+
+        snake.RemoveAt(snake.Count - 1);
+        snakeRotations.RemoveAt(snakeRotations.Count - 1);
+
+        Destroy(bodyToDelete);
     }
 
     public int GetLength()
@@ -215,13 +317,23 @@ public class MovementSnake : MonoBehaviour {
 
     private void MoveFoodToNewLocation()
     {
+        if(!VariableManager.instance.placeRandomFoodActive)
+        {
+            Debug.Log("Skipping random placement");
+            return;
+        }
 
         //Get a random position
         Vector3 newFoodPostion = Vector3Extensions.getRandomVector();
         //Make it fit the entire grid
         newFoodPostion.Scale(VariableManager.instance.mapSize);
-        //mvoe the food on the edges of the grid
-        food.transform.position = newFoodPostion.floorComponents();
+        //move the food on the edges of the grid
+        MoveFoodToNewLocation(newFoodPostion.floorComponents());
+    }
+
+    public void MoveFoodToNewLocation(Vector3 newLocation)
+    {
+        food.transform.position = newLocation;
         //move it right into the middle of a block in the grid
         food.transform.Translate(new Vector3(0.5f, 0.5f, 0.5f));
     }
