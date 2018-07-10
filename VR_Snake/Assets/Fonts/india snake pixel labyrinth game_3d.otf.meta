@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 51057ec3f162b234e88fc289917c5bd6
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: India Snake Pixel Labyrinth Gam
+  fontNames:
+  - India Snake Pixel Labyrinth Gam
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 4d1caa07b668e3c4fb9c46274ca09b01, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

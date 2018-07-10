@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: c05e21db9f6098b408ab2bb28fb116e9
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: India Snake Pixel Labyrinth Game
+  fontNames:
+  - India Snake Pixel Labyrinth Game
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
