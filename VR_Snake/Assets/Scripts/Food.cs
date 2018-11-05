@@ -12,14 +12,17 @@ public class Food : MonoBehaviour
     {
         respawnTimeMin = VariableManager.instance.foodTimeMin;
         respawnTimeMax = VariableManager.instance.foodTimeMax;
-        ScheduleRespawn();
+        if (!selfDestructOnUse)
+        {
+            ScheduleRespawn();
+        }
     }
 
     public void ScheduleRespawn()
     {
         if (selfDestructOnUse)
         {
-            Destroy(this);
+            Destroy(gameObject);
         }
         timeTillRespawn = ((respawnTimeMax - respawnTimeMin) * UnityEngine.Random.value) + respawnTimeMin;
         hideObject();
@@ -75,7 +78,7 @@ public class Food : MonoBehaviour
         }
     }
 
-    void showObject()
+    public void showObject()
     {
         isVisible = true;
         Renderer[] rs = GetComponentsInChildren<Renderer>();
