@@ -1394,6 +1394,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   respawnTimeMin: 0
   respawnTimeMax: 0
+  appleToDuplicate: {fileID: 965855357}
 --- !u!4 &136934022 stripped
 Transform:
   m_PrefabParentObject: {fileID: 400002, guid: f8d07adaadbd84b448d6c731458513ac, type: 2}
