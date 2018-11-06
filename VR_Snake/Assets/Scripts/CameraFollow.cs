@@ -7,6 +7,6 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        transform.LookAt(snake.transform);
+     //   transform.LookAt(snake.transform);
     }
 }

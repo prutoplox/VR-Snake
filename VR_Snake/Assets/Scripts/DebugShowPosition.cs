@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.XR;
 
 //Script for creating a camera and snake with smooth movement
 public class DebugShowPosition : MonoBehaviour
@@ -28,6 +29,8 @@ public class DebugShowPosition : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
+       // UnityEngine.XR.InputTracking.Recenter();
+        XRDevice.SetTrackingSpaceType(TrackingSpaceType.Stationary);
         GetPositionsFromSnake();
 
         if (firstLoop)
