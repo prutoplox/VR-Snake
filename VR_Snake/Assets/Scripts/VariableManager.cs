@@ -166,7 +166,7 @@ public class VariableManager : MonoBehaviour
         useKeyboard = true;
         useVRAdvanced = false;
         useVRBasic = false;
-        useVR360persistent = false;
+        useVR360persistent = true;
         useVRControllerBasic = true;
         useVRControllerBasicButtons = false;
         useRotationControl = false;
@@ -221,8 +221,8 @@ public class VariableManager : MonoBehaviour
         goldenApplePointMultiplier = 10;
 
         //mulit apple
-        multiAppleTimeMin = 2;
-        multiAppleTimeMax = 6;
+        multiAppleTimeMin = 20;
+        multiAppleTimeMax = 60;
         multiAppleExtraApples = 5;
 
         //row apple
@@ -329,6 +329,8 @@ public class VariableManager : MonoBehaviour
 
     public void setUseVrOn()
     {
+        GameObject cameraParent = GameObject.Find("CameraParent");
+        cameraParent.transform.rotation = Quaternion.identity;
         enableUseVr = true;
         VariableManager.instance.useVR360persistent = true;
         VariableManager.instance.useKeyboard = true;

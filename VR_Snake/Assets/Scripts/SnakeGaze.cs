@@ -38,6 +38,6 @@ public class SnakeGaze : MonoBehaviour
         oldOffset = camOffset;
 
         //Substract the postition of the TestCamera relative to the parent to reset it where it should be
-        cam.transform.parent.position = parentPosition - camOffset;
+     //   cam.transform.parent.position = parentPosition - camOffset;
     }
 }
